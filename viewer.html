@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gamepad Skin Viewer</title>
+<!--
+  Local viewer for the skin. It uses the same HTML structure and the same
+  update rules as gamepadviewer.com (pressed class, trigger opacity,
+  stick margin + tilt), so what you see here is what you get there.
+
+  Options (add to the URL):
+    ?css=other.css     load a different skin file
+    ?bg=transparent    transparent background (for OBS)
+    ?sc=0.6            scale
+    ?p=2               player / controller slot (1-4)
+  Keyboard demo (no controller needed): see the help text on the page.
+-->
+<link id="skin" rel="stylesheet" href="neon-skin.css">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #3b3f4a; }
+  body.transparent { background: transparent; }
+  .controller { position: absolute; top: 50%; left: 50%; transform-origin: 0 0; }
+  #help {
+    position: fixed; left: 12px; bottom: 10px; font: 13px/1.5 system-ui, sans-serif;
+    color: #d6dbe8; opacity: .8; pointer-events: none;
+  }
+  body.transparent #help { display: none; }
+</style>
+</head>
+<body>
+<div class="controller custom disconnected" id="gamepad">
+  <div class="triggers">
+    <span class="trigger left" data-name="button-left-shoulder-bottom"></span>
+    <span class="trigger right" data-name="button-right-shoulder-bottom"></span>
+    <span class="trigger-button left" data-name="button-left-shoulder-bottom-digital"></span>
+    <span class="trigger-button right" data-name="button-right-shoulder-bottom-digital"></span>
+    <span class="clear"></span>
+  </div>
+  <div class="bumpers">
+    <span class="bumper left" data-name="button-left-shoulder-top"></span>
+    <span class="bumper right" data-name="button-right-shoulder-top"></span>
+    <span class="clear"></span>
+  </div>
+  <div class="touchpad" data-name="touch-pad"></div>
+  <div class="quadrant"></div>
+  <div class="meta" data-name="button-meta"></div>
+  <div class="arrows">
+    <span class="back" data-name="button-select"></span>
+    <span class="start" data-name="button-start"></span>
+    <span class="clear"></span>
+  </div>
+  <div class="abxy">
+    <span class="button a" data-name="button-1"></span>
+    <span class="button b" data-name="button-2"></span>
+    <span class="button x" data-name="button-3"></span>
+    <span class="button y" data-name="button-4"></span>
+  </div>
+  <div class="sticks">
+    <span class="stick left" data-name="stick-1"></span>
+    <span class="stick right" data-name="stick-2"></span>
+  </div>
+  <div class="wheels">
+    <span class="wheel left" data-name="stick-1-wheel"></span>
+    <span class="wheel right" data-name="stick-2-wheel"></span>
+  </div>
+  <div class="dpad">
+    <span class="face up" data-name="button-dpad-top"></span>
+    <span class="face down" data-name="button-dpad-bottom"></span>
+    <span class="face left" data-name="button-dpad-left"></span>
+    <span class="face right" data-name="button-dpad-right"></span>
+  </div>
+  <div class="fstick" data-name="arcade-stick"></div>
+</div>
+
+<div id="help">
+  Plug in a controller and press a button &mdash; or use the keyboard:
+  WASD left stick &middot; IJKL right stick &middot; arrows d-pad &middot;
+  Space A &middot; E B &middot; Q X &middot; R Y &middot; 1 LB &middot; 2 RB &middot; 3 LT &middot; 4 RT &middot;
+  Tab View &middot; Enter Menu &middot; G Guide &middot; F / H stick clicks
+</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  if (params.get('css')) document.getElementById('skin').href = params.get('css');
+  // transparent automatically inside OBS, or with ?bg=transparent
+  if (params.get('bg') === 'transparent' || window.obsstudio) document.body.classList.add('transparent');
+  var scale = parseFloat(params.get('sc')) || 0;
+  var slot = Math.max(0, (parseInt(params.get('p'), 10) || 1) - 1);
+
+  var pad = document.getElementById('gamepad');
+  function fit() {
+    var s = scale || Math.min(innerWidth / 790, innerHeight / 670, 1);
+    pad.style.transform = 'scale(' + s + ') translate(-50%, -50%)';
+  }
+  addEventListener('resize', fit); fit();
+
+  // Standard Gamepad API button order -> GamepadViewer data-name
+  var BUTTONS = [
+    'button-1', 'button-2', 'button-3', 'button-4',                      // A B X Y
+    'button-left-shoulder-top', 'button-right-shoulder-top',              // LB RB
+    'button-left-shoulder-bottom', 'button-right-shoulder-bottom',        // LT RT (analogue)
+    'button-select', 'button-start', 'stick-1', 'stick-2',
+    'button-dpad-top', 'button-dpad-bottom', 'button-dpad-left', 'button-dpad-right',
+    'button-meta'
+  ];
+  var TRIGGERS = { 6: 1, 7: 1 };
+  var STICK_OFFSET = 22, STICK_DEADZONE = 0.25, PRESS = 0.25;
+
+  function el(name) { return pad.querySelector('[data-name="' + name + '"]'); }
+
+  function setButton(i, value) {
+    var name = BUTTONS[i];
+    if (!name) return;
+    if (TRIGGERS[i]) {
+      el(name).style.opacity = value;
+      var digital = el(name + '-digital');
+      if (digital) digital.classList.toggle('pressed', value > 0.1);
+    } else {
+      el(name).classList.toggle('pressed', value > PRESS);
+    }
+  }
+
+  function setStick(name, x, y) {
+    var s = el(name);
+    var on = Math.sqrt(x * x + y * y) >= STICK_DEADZONE;
+    var h = on ? x * STICK_OFFSET : 0, v = on ? y * STICK_OFFSET : 0;
+    s.style.marginLeft = h + 'px';
+    s.style.marginTop = v + 'px';
+    s.style.transform = 'rotateX(' + (-v) + 'deg) rotateY(' + h + 'deg)';
+  }
+
+  // ---- keyboard demo ----
+  var keyButtons = {
+    Space: 0, KeyE: 1, KeyQ: 2, KeyR: 3, Digit1: 4, Digit2: 5, Digit3: 6, Digit4: 7,
+    Tab: 8, Enter: 9, KeyF: 10, KeyH: 11,
+    ArrowUp: 12, ArrowDown: 13, ArrowLeft: 14, ArrowRight: 15, KeyG: 16
+  };
+  var keyAxes = {
+    KeyA: [0, -1], KeyD: [0, 1], KeyW: [1, -1], KeyS: [1, 1],
+    KeyJ: [2, -1], KeyL: [2, 1], KeyI: [3, -1], KeyK: [3, 1]
+  };
+  var down = {};
+  function onKey(e, isDown) {
+    if (!(e.code in keyButtons) && !(e.code in keyAxes)) return;
+    e.preventDefault();
+    down[e.code] = isDown;
+  }
+  addEventListener('keydown', function (e) { onKey(e, true); });
+  addEventListener('keyup', function (e) { onKey(e, false); });
+
+  function keyboardState() {
+    var buttons = BUTTONS.map(function () { return 0; });
+    var axes = [0, 0, 0, 0], any = false;
+    for (var code in down) {
+      if (!down[code]) continue;
+      any = true;
+      if (code in keyButtons) buttons[keyButtons[code]] = 1;
+      else axes[keyAxes[code][0]] += keyAxes[code][1];
+    }
+    return any ? { buttons: buttons, axes: axes } : null;
+  }
+
+  var connected = false, keyboardUsed = false;
+  function frame() {
+    var gp = navigator.getGamepads ? navigator.getGamepads()[slot] : null;
+    var state = null;
+    if (gp && gp.connected) {
+      state = {
+        buttons: Array.prototype.map.call(gp.buttons, function (b) { return b.value; }),
+        axes: gp.axes
+      };
+    }
+    var kb = keyboardState();
+    if (kb) keyboardUsed = true;
+    if (!state && keyboardUsed) state = kb || { buttons: [], axes: [0, 0, 0, 0] };
+    else if (state && kb) {           // merge keyboard on top of a real pad
+      state.buttons = state.buttons.map(function (v, i) { return Math.max(v, kb.buttons[i] || 0); });
+    }
+
+    var isOn = !!state;
+    if (isOn !== connected) { connected = isOn; pad.classList.toggle('disconnected', !isOn); }
+    if (state) {
+      for (var i = 0; i < BUTTONS.length; i++) setButton(i, state.buttons[i] || 0);
+      setStick('stick-1', state.axes[0] || 0, state.axes[1] || 0);
+      setStick('stick-2', state.axes[2] || 0, state.axes[3] || 0);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
