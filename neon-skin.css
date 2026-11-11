@@ -1,0 +1,283 @@
+/* =====================================================================
+   NEON MIDNIGHT — custom controller skin for GamepadViewer
+   ---------------------------------------------------------------------
+   Use:   https://gamepadviewer.com/?p=1&css=<link to this file>
+   When a css= link is given, GamepadViewer gives the controller the
+   class "custom" and drops all stock styling, so this file lays out
+   every part itself.
+   Pure CSS (no images), so this single file is all you need to host.
+   Canvas: 750 x 630 px.
+
+   Recolour it by changing the variables directly below.
+   ===================================================================== */
+
+.controller.custom {
+  --body:        #15171f;   /* controller shell            */
+  --body-edge:   #2a2e3b;   /* shell outline               */
+  --part:        #232633;   /* unpressed buttons / sticks  */
+  --part-edge:   #3a3f52;
+  --accent:      #00e5ff;   /* glow colour for presses     */
+  --accent-2:    #ff2bd6;   /* triggers / bumpers          */
+  --text:        #c9d1e6;
+  --btn-a:       #3ddc84;
+  --btn-b:       #ff4d5e;
+  --btn-x:       #3d8bff;
+  --btn-y:       #ffd23d;
+
+  width: 750px;
+  height: 630px;
+  background: none;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Parts this skin doesn't use */
+.custom .touchpad, .custom .quadrant, .custom .wheels, .custom .fstick,
+.custom .trigger-button, .custom .clear { display: none; }
+
+/* Every part sits above the shell */
+.custom .triggers, .custom .bumpers, .custom .arrows, .custom .abxy,
+.custom .sticks, .custom .dpad, .custom .meta { position: absolute; z-index: 1; }
+.custom .triggers span, .custom .bumpers span, .custom .arrows span,
+.custom .abxy span, .custom .sticks span, .custom .dpad span { display: block; }
+
+/* ---------- Shell ---------------------------------------------------- */
+.controller.custom::before,
+.controller.custom::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  filter: drop-shadow(0 0 1.5px var(--body-edge)) drop-shadow(0 12px 24px rgba(0,0,0,.55));
+  transition: opacity .3s;
+}
+/* upper body */
+.controller.custom::before {
+  left: 72px; top: 150px; width: 606px; height: 290px;
+  border-radius: 150px 150px 120px 120px / 120px 120px 90px 90px;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 10%, rgba(255,255,255,.06), transparent 70%),
+    var(--body);
+}
+/* grips */
+.controller.custom::after {
+  left: 40px; top: 210px; width: 670px; height: 400px;
+  background:
+    radial-gradient(ellipse 128px 188px at 150px 196px, var(--body) 98.5%, transparent 100%),
+    radial-gradient(ellipse 128px 188px at 520px 196px, var(--body) 98.5%, transparent 100%),
+    linear-gradient(var(--body), var(--body)) 150px 0 / 370px 170px no-repeat;
+}
+
+/* ---------- Triggers (LT / RT) ---------------------------------------
+   GamepadViewer sets the trigger's inline opacity to how far it is
+   pulled, so .trigger is the glowing "fill" and the empty outline is
+   drawn underneath on .triggers                                        */
+.custom .triggers { left: 152px; top: 18px; width: 446px; height: 121px; }
+.custom .triggers::before,
+.custom .triggers::after {
+  content: "";
+  position: absolute; top: 0;
+  width: 88px; height: 121px;
+  box-sizing: border-box;
+  background: var(--part);
+  border: 2px solid var(--part-edge);
+  border-radius: 44px 44px 14px 14px / 70px 70px 14px 14px;
+}
+.custom .triggers::before { left: 0; }
+.custom .triggers::after  { right: 0; }
+.custom .trigger {
+  position: absolute; top: 0; z-index: 1;
+  width: 88px; height: 121px;
+  opacity: 0;
+  background: linear-gradient(180deg, var(--accent-2), #7a1cff);
+  border-radius: 44px 44px 14px 14px / 70px 70px 14px 14px;
+  box-shadow: 0 0 22px var(--accent-2);
+}
+.custom .trigger.left  { left: 0; }
+.custom .trigger.right { right: 0; }
+.custom .triggers::before, .custom .triggers::after { z-index: 0; }
+
+/* LT / RT labels */
+.custom .trigger::after {
+  position: absolute; left: 0; right: 0; bottom: 14px;
+  text-align: center; font-weight: 700; font-size: 18px; color: #fff;
+}
+.custom .trigger.left::after  { content: "LT"; }
+.custom .trigger.right::after { content: "RT"; }
+
+/* ---------- Bumpers (LB / RB) --------------------------------------- */
+.custom .bumpers { left: 107px; top: 150px; width: 536px; height: 40px; }
+.custom .bumper {
+  position: absolute; top: 0;
+  width: 170px; height: 40px;
+  box-sizing: border-box;
+  background: var(--part);
+  border: 2px solid var(--part-edge);
+  color: var(--text);
+  font-weight: 700; font-size: 16px; line-height: 36px; text-align: center;
+  transition: background .06s, box-shadow .06s;
+}
+.custom .bumper.left  { left: 0;  border-radius: 60px 22px 8px 8px / 30px 22px 8px 8px; }
+.custom .bumper.right { right: 0; border-radius: 22px 60px 8px 8px / 22px 30px 8px 8px; }
+.custom .bumper.left::after  { content: "LB"; }
+.custom .bumper.right::after { content: "RB"; }
+.custom .bumper.pressed {
+  background: var(--accent-2);
+  border-color: #fff; color: #fff;
+  box-shadow: 0 0 22px var(--accent-2);
+}
+
+/* ---------- Guide button -------------------------------------------- */
+.custom .meta {
+  display: block;
+  left: 349px; top: 196px;
+  width: 52px; height: 52px; border-radius: 50%;
+  box-sizing: border-box;
+  background: radial-gradient(circle at 50% 40%, #2d3142, var(--part));
+  border: 2px solid var(--part-edge);
+  transition: box-shadow .06s, border-color .06s;
+}
+.custom .meta::before {          /* power-ring glyph */
+  content: "";
+  position: absolute; inset: 13px;
+  border: 3px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+}
+.custom .meta::after {
+  content: "";
+  position: absolute; left: 22.5px; top: 9px;
+  width: 3px; height: 14px; border-radius: 2px;
+  background: var(--accent);
+}
+.custom .meta.pressed {
+  border-color: var(--accent);
+  box-shadow: 0 0 26px var(--accent), inset 0 0 12px var(--accent);
+}
+
+/* ---------- View / Menu --------------------------------------------- */
+.custom .arrows { left: 306px; top: 264px; width: 141px; height: 34px; }
+.custom .back, .custom .start {
+  position: absolute; top: 0;
+  width: 34px; height: 34px; border-radius: 50%;
+  box-sizing: border-box;
+  background: var(--part);
+  border: 2px solid var(--part-edge);
+  color: var(--text);
+  font-size: 15px; line-height: 30px; text-align: center;
+  transition: background .06s, box-shadow .06s;
+}
+.custom .back  { left: 0; }
+.custom .start { right: 0; }
+.custom .back::after  { content: "\29C9"; }                  /* ⧉ View */
+.custom .start::after { content: "\2261"; font-size: 20px; } /* ≡ Menu */
+.custom .back.pressed, .custom .start.pressed {
+  background: var(--accent);
+  border-color: #fff; color: #000;
+  box-shadow: 0 0 18px var(--accent);
+}
+
+/* ---------- A B X Y ------------------------------------------------- */
+.custom .abxy { left: 488px; top: 192px; width: 156px; height: 160px; }
+.custom .button {
+  --c: var(--accent);
+  position: absolute;
+  width: 50px; height: 50px; border-radius: 50%;
+  box-sizing: border-box;
+  background: var(--part);
+  border: 3px solid var(--c);
+  color: var(--c);
+  font-weight: 800; font-size: 22px; line-height: 44px; text-align: center;
+  transition: background .05s, box-shadow .05s, transform .05s;
+}
+.custom .button.a { --c: var(--btn-a); left: 53px; top: 106px; }
+.custom .button.b { --c: var(--btn-b); left: 106px; top: 53px; }
+.custom .button.x { --c: var(--btn-x); left: 0;    top: 53px; }
+.custom .button.y { --c: var(--btn-y); left: 53px; top: 0; }
+.custom .button.a::after { content: "A"; }
+.custom .button.b::after { content: "B"; }
+.custom .button.x::after { content: "X"; }
+.custom .button.y::after { content: "Y"; }
+.custom .button.pressed {
+  background: var(--c);
+  color: #0b0c10;
+  transform: scale(.92);
+  box-shadow: 0 0 24px var(--c), 0 0 6px #fff inset;
+}
+
+/* ---------- Thumbsticks ----------------------------------------------
+   GamepadViewer moves each stick with inline margin-left / margin-top
+   and tilts it with an inline rotateX/rotateY transform.               */
+.custom .sticks { left: 144px; top: 239px; width: 371px; height: 196px; }
+.custom .sticks::before,
+.custom .sticks::after {          /* stick wells */
+  content: "";
+  position: absolute;
+  width: 115px; height: 115px; border-radius: 50%;
+  background: radial-gradient(circle, #0b0c11 55%, #1d2029 100%);
+  box-shadow: inset 0 4px 10px rgba(0,0,0,.7), 0 0 0 2px var(--body-edge);
+}
+.custom .sticks::before { left: -16px; top: -16px; }
+.custom .sticks::after  { left: 272px; top: 97px; }
+.custom .stick {
+  position: absolute; z-index: 1;
+  width: 83px; height: 83px; border-radius: 50%;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle, transparent 46%, rgba(255,255,255,.07) 47% 52%, transparent 53%),
+    radial-gradient(circle at 40% 35%, #3a3f52, var(--part) 70%);
+  border: 2px solid var(--part-edge);
+  box-shadow: 0 6px 12px rgba(0,0,0,.6);
+  transition: box-shadow .06s, border-color .06s;
+}
+.custom .stick.left  { left: 0;     top: 0; }
+.custom .stick.right { left: 288px; top: 113px; }
+.custom .stick.pressed {
+  border-color: var(--accent);
+  box-shadow: 0 0 24px var(--accent), inset 0 0 16px var(--accent);
+}
+
+/* ---------- D-pad --------------------------------------------------- */
+.custom .dpad { left: 223px; top: 345px; width: 110px; height: 110px; }
+.custom .dpad::before,
+.custom .dpad::after {
+  content: "";
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--part);
+  border: 2px solid var(--part-edge);
+  border-radius: 8px;
+}
+.custom .dpad::before { left: 38px; top: 0;  width: 34px;  height: 110px; }
+.custom .dpad::after  { left: 0;  top: 38px; width: 110px; height: 34px; }
+.custom .face {
+  position: absolute; z-index: 1;
+  opacity: 0;
+  background: var(--accent);
+  box-shadow: 0 0 18px var(--accent);
+  border-radius: 8px;
+  transition: opacity .05s;
+}
+.custom .face.up    { left: 38px; top: 0;    width: 34px; height: 40px; }
+.custom .face.down  { left: 38px; bottom: 0; width: 34px; height: 40px; }
+.custom .face.left  { left: 0;    top: 38px; width: 40px; height: 34px; }
+.custom .face.right { right: 0;   top: 38px; width: 40px; height: 34px; }
+.custom .face.pressed { opacity: 1; }
+
+/* ---------- Disconnected state -------------------------------------- */
+.custom.disconnected::before,
+.custom.disconnected::after { opacity: .45; }
+.custom.disconnected .triggers, .custom.disconnected .bumpers,
+.custom.disconnected .abxy, .custom.disconnected .sticks,
+.custom.disconnected .dpad, .custom.disconnected .arrows > span { opacity: .35; }
+.custom.disconnected .meta { animation: neon-pulse 1.6s ease-in-out infinite; }
+.custom.disconnected .arrows::after {
+  content: "PRESS ANY BUTTON";
+  position: absolute; left: -100px; right: -100px; top: 200px;
+  text-align: center; letter-spacing: 3px;
+  font-size: 15px; font-weight: 700; color: var(--accent);
+  text-shadow: 0 0 10px var(--accent);
+}
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 4px var(--accent); }
+  50%      { box-shadow: 0 0 28px var(--accent); }
+}
